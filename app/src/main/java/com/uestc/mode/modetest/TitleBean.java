@@ -1,9 +1,12 @@
 package com.uestc.mode.modetest;
 
-public class TitleBean {
+import java.io.Serializable;
+
+public class TitleBean implements Serializable{
     private String title = "";
     private String url = "";
     private String subContent = "";
+    private boolean isChecked = false;
 
     public String getTitle() {
         return title;
