@@ -1,6 +1,24 @@
 apply plugin: 'com.android.application'
 
 android {
+
+    signingConfigs {
+
+        debug {
+            keyAlias 'musiczonekey'
+            keyPassword '__137mzkey'
+            storeFile file('../musiczone.key')
+            storePassword '__137mzkey'
+        }
+
+        release {
+            keyAlias 'musiczonekey'
+            keyPassword '__137mzkey'
+            storeFile file('../musiczone.key')
+            storePassword '__137mzkey'
+        }
+    }
+
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.uestc.mode.modetest"
@@ -19,10 +37,11 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.0.0-alpha3'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation files('libs/jxl.jar')
 }

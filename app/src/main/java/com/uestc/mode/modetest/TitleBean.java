@@ -6,7 +6,7 @@ public class TitleBean implements Serializable{
     private String title = "";
     private String url = "";
     private String subContent = "";
-    private boolean isChecked = false;
+    private boolean isFavorite = false;
 
     public String getTitle() {
         return title;
@@ -30,5 +30,13 @@ public class TitleBean implements Serializable{
 
     public void setSubContent(String subContent) {
         this.subContent = subContent;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
     }
 }

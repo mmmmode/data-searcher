@@ -7,11 +7,12 @@
         android:id="@+id/item_ll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_marginTop="5dp">
         <TextView
             android:id="@+id/title_tv"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:minHeight="56dp"
             android:gravity="center_vertical"
             android:layout_height="wrap_content"
@@ -20,6 +21,11 @@
             android:paddingRight="16dp"
             android:textSize="20dp"
             android:textColor="@color/colorPrimaryDark"/>
+        <ImageView
+            android:id="@+id/favorite"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/empty_star"/>
     </LinearLayout>
     <TextView
         android:layout_marginTop="4dp"

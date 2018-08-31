@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 public class MainAdapter extends BaseAdapter{
 
     Context context;
-    List<TitleBean> titleBeans = new ArrayList<>();
+    List<TitleBean> titleBeans;
     public MainAdapter(Context context, List<TitleBean> titleBeans){
         this.context = context;
         this.titleBeans = titleBeans;
@@ -46,7 +47,7 @@ public class MainAdapter extends BaseAdapter{
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         ViewHolder holder;
-        TitleBean titleBean = titleBeans.get(i);
+        final TitleBean titleBean = titleBeans.get(i);
 
         if (view == null){
             view = LayoutInflater.from(context).inflate(R.layout.item_object,null);
@@ -54,6 +55,14 @@ public class MainAdapter extends BaseAdapter{
             holder.titleTv = (TextView) view.findViewById(R.id.title_tv);
             holder.itemView =  view.findViewById(R.id.item_ll);
             holder.timeTv = view.findViewById(R.id.content_tv);
+            holder.favorite = view.findViewById(R.id.favorite);
+            holder.favorite.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    titleBean.setFavorite(!titleBean.isFavorite());
+                    notifyDataSetChanged();
+                }
+            });
             view.setTag(holder);
         }else {
             holder = (ViewHolder) view.getTag();
@@ -63,6 +72,11 @@ public class MainAdapter extends BaseAdapter{
         }else {
         }
 
+        if(titleBean.isFavorite()){
+            holder.favorite.setImageDrawable(context.getResources().getDrawable(R.drawable.full_star));
+        }else {
+            holder.favorite.setImageDrawable(context.getResources().getDrawable(R.drawable.empty_star));
+        }
         holder.titleTv.setText(titleBean.getTitle());
         holder.timeTv.setText(titleBean.getSubContent());
         return view;
@@ -72,5 +86,6 @@ public class MainAdapter extends BaseAdapter{
         View itemView;
         TextView titleTv;
         TextView timeTv;
+        ImageView favorite;
     }
 }
