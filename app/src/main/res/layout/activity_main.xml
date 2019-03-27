@@ -40,9 +40,50 @@
             android:textColor="#ffffff"
             android:textSize="20dp"
             android:textStyle="bold" />
-
+        <TextView
+            android:id="@+id/choose_soucrce"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:text="点我取源"
+            android:textSize="20dp"
+            android:textColor="@color/colorwhite"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            android:layout_height="match_parent" />
     </LinearLayout>
 
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/choosed_source_ll"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:paddingTop="6dp"
+        android:background="@color/gray"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/source_sina"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_weight="1"
+            android:background="@color/gray_pressed"
+            android:text="新浪"
+            android:gravity="center"
+            android:textColor="#000000"
+            android:textSize="20dp" />
+        <TextView
+            android:id="@+id/source_juchao"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:text="巨潮"
+            android:textSize="20dp"
+            android:textColor="#000000"
+            android:gravity="center"
+            android:background="@color/gray_pressed"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

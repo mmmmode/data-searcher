@@ -1,7 +1,6 @@
 package com.uestc.mode.modetest;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaMetadataRetriever;
@@ -13,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,20 +23,21 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jxl.Workbook;
 import jxl.format.Border;
@@ -54,8 +55,11 @@ import jxl.write.WriteException;
  */
 public class MainActivity extends AppCompatActivity {
 
+    public static final int SOURCE_SINA = 1;//新浪
+    public static final int SOURCE_JUCHAO = 2;//巨潮
+
     EditText editText;
-    Button button;
+    Button searchButton;
     View exportAll;
     View exportSome;
     TextView textView;
@@ -64,16 +68,18 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
     MainAdapter mainAdapter;
     View footer;
+    TextView chooseSourceTv;
     int page = 0;
     String currentKeyword = "";
     boolean isRequest = false;
 
+    private  int currentSource = -1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         editText = findViewById(R.id.edit_et);
-        button = findViewById(R.id.search_btn);
+        searchButton = findViewById(R.id.search_btn);
         listView = findViewById(R.id.result);
         exportAll = findViewById(R.id.export_all);
         exportSome = findViewById(R.id.export_some);
@@ -83,9 +89,13 @@ public class MainActivity extends AppCompatActivity {
         mainAdapter = new MainAdapter(this,titleBeans);
         listView.setAdapter(mainAdapter);
 //        titleTv = findViewById(R.id.result);
-        button.setOnClickListener(new View.OnClickListener() {
+        searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(currentSource == -1){
+                    Toast.makeText(MainActivity.this,"先选取源",Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -103,6 +113,14 @@ public class MainActivity extends AppCompatActivity {
                         requestUrl(0,keyword);
                     }
                 }).start();
+            }
+        });
+
+        chooseSourceTv = findViewById(R.id.choose_soucrce);
+        chooseSourceTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chooseSource();
             }
         });
 
@@ -128,6 +146,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.source_sina).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSource(SOURCE_SINA);
+            }
+        });
+
+        findViewById(R.id.source_juchao).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSource(SOURCE_JUCHAO);
+            }
+        });
+
         exportSome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -149,6 +181,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void setSource(int source){
+        this.currentSource = source;
+        findViewById(R.id.choosed_source_ll).setVisibility(View.GONE);
+        if(source == SOURCE_JUCHAO){
+            chooseSourceTv.setText("巨潮");
+        }else if(source == SOURCE_SINA){
+            chooseSourceTv.setText("新浪");
+        }
+    }
+
+    public void chooseSource(){
+        findViewById(R.id.choosed_source_ll).setVisibility(View.VISIBLE);
+    }
+
     public void updateData(boolean isFromFavorite){
         if(currentKeyword.isEmpty())return;
         if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -168,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
             OutputStream os = new FileOutputStream(file);
             wwb = Workbook.createWorkbook(os);
             WritableSheet sheet = wwb.createSheet(currentKeyword, 0);
-            String[] title = { "标题", "简介", "链接地址", "关键字" };
+            String[] title = { "标题", "简介", "链接地址", "关键字","来源" };
             Label label;
             for (int i = 0; i < title.length; i++) {
                 // Label(x,y,z) 代表单元格的第x+1列，第y+1行, 内容z
@@ -186,11 +232,18 @@ public class MainActivity extends AppCompatActivity {
                 Label restaurant = new Label(1, i + 1, titleBean.getSubContent());
                 Label nameLabel = new Label(2,i+1,titleBean.getUrl());
                 Label address = new Label(3, i + 1, currentKeyword);
-
+                String source = "";
+                if(currentSource == SOURCE_JUCHAO){
+                    source = "巨潮";
+                }else if(currentSource == SOURCE_SINA){
+                    source = "新浪";
+                }
+                Label msource = new Label(4,i+1,source);
                 sheet.addCell(orderNum);
                 sheet.addCell(restaurant);
                 sheet.addCell(nameLabel);
                 sheet.addCell(address);
+                sheet.addCell(msource);
 
                 i++;
             }
@@ -274,9 +327,8 @@ public class MainActivity extends AppCompatActivity {
     public void requestUrl(int temppage,String keyword){
         if(isRequest)return;
         this.page = temppage;
-
-        String url = "https://search.sina.com.cn/?q="+keyword+"&range=all&c=news&sort=time&col=&source=&from=&country=&size=&time=&a=&page="+page;
-        List<TitleBean> tempTitleBeans = sendGet(url);
+        String url = chooseUrl(temppage,keyword);
+        List<TitleBean> tempTitleBeans = chooseResult(url);
         isRequest = false;
         if(tempTitleBeans.size() == 0){
             if(page == 0){
@@ -311,6 +363,65 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
+    public static List<TitleBean> getJuchaoResult(String url) {
+        List<TitleBean> titleBeans = new ArrayList<>();
+        String result = sendGet(url);
+        try {
+            JSONArray jsonArray = new JSONObject(result).getJSONArray("announcements");
+            for(int i =0;i<jsonArray.length();i++){
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                //http://static.cninfo.com.cn/finalpage/2019-02-21/1205843737.PDF
+                TitleBean titleBean = new TitleBean();
+                String resultx =  Jsoup.parse(jsonObject.getString("announcementTitle")).body().text();
+                titleBean.setTitle(resultx);
+                titleBean.setUrl("http://static.cninfo.com.cn/"+jsonObject.getString("adjunctUrl"));
+                titleBean.setSubContent(Utils.timeStamp2Date(jsonObject.getLong("announcementTime")/1000));
+                titleBeans.add(titleBean);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return titleBeans;
+    }
+
+    public static String sendGet(String url) {
+        String result = "";
+        BufferedReader in = null;
+        try {
+            URL realUrl = new URL(url);
+            // 打开和URL之间的连接
+            URLConnection connection = realUrl.openConnection();
+            // 设置通用的请求属性
+            connection.setReadTimeout(10*1000);
+            connection.setConnectTimeout(10*1000);
+            connection.setRequestProperty("accept", "*/*");
+            connection.setRequestProperty("connection", "Keep-Alive");
+            connection.setRequestProperty("user-agent",
+                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+            // 建立实际的连接
+            connection.connect();
+            // 定义 BufferedReader输入流来读取URL的响应
+            in = new BufferedReader(new InputStreamReader(
+                    connection.getInputStream()));
+            String line;
+            while ((line = in.readLine()) != null) {
+                result += line;
+            }
+        } catch (Exception e) {
+        }
+        // 使用finally块来关闭输入流
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e2) {
+            }
+        }
+        return result;
+    }
     /**
      * 向指定URL发送GET方法的请求
      *
@@ -318,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
      *      发送请求的URL
      * @return URL 所代表远程资源的响应结果
      */
-    public static List<TitleBean> sendGet(String url) {
+    public List<TitleBean> getSinaResult(String url) {
         String result = "";
         BufferedReader in = null;
         List<TitleBean> titleBeans = new ArrayList<>();
@@ -341,12 +452,51 @@ public class MainActivity extends AppCompatActivity {
 
             InputStream inputStream = connection.getInputStream();
             in = new BufferedReader(new InputStreamReader(inputStream, "gb2312"));
+            resolveSinaData(in,titleBeans);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // 使用finally块来关闭输入流
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+        return titleBeans;
+    }
+
+    private String chooseUrl(int page,String currentKeyword){
+        String url = "";
+        if(currentSource == SOURCE_SINA){
+            url = "https://search.sina.com.cn/?q="+URLEncoder.encode(currentKeyword)+"&range=all&c=news&sort=time&col=&source=&from=&country=&size=&time=&a=&page="+page;
+        }else if(currentSource == SOURCE_JUCHAO){
+            url = "http://www.cninfo.com.cn/new/fulltextSearch/full?searchkey="+URLEncoder.encode(currentKeyword)+"&sdate=&edate=&isfulltext=false&sortName=nothing&sortType=desc&pageNum="+page;
+        }
+        return url;
+    }
+
+    private List<TitleBean> chooseResult(String url){
+        List<TitleBean> titleBeans = new ArrayList<>();
+        if(currentSource == SOURCE_SINA){
+            titleBeans = getSinaResult(url);
+        }else if(currentSource == SOURCE_JUCHAO){
+            titleBeans = getJuchaoResult(url);
+        }
+        return titleBeans;
+    }
+
+    private void resolveSinaData(BufferedReader in,List<TitleBean> titleBeans){
+        try {
             String line;
 
             while ((line = in.readLine()) != null) {
 //                Matcher m = pattern.matcher(line);
-                if(line.contains("http://finance.sina.com.cn") && !line.contains("频道")){
+                if(!line.contains("频道")){
                     String[] lines = line.split(" target=\"_blank\">");
                     if(lines.length > 1){
                         String murl1 = lines[0].replaceAll("<h2><a href=","").replaceAll("\"","").replaceAll(" ","");
@@ -370,20 +520,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
-        // 使用finally块来关闭输入流
-        finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
-        }
-        return titleBeans;
     }
 
     public void notifys(){

@@ -46,7 +46,7 @@ public class MainAdapter extends BaseAdapter{
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        ViewHolder holder;
+        final ViewHolder holder;
         final TitleBean titleBean = titleBeans.get(i);
 
         if (view == null){
@@ -56,11 +56,14 @@ public class MainAdapter extends BaseAdapter{
             holder.itemView =  view.findViewById(R.id.item_ll);
             holder.timeTv = view.findViewById(R.id.content_tv);
             holder.favorite = view.findViewById(R.id.favorite);
+            holder.titleBean = titleBean;
             holder.favorite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    titleBean.setFavorite(!titleBean.isFavorite());
-                    notifyDataSetChanged();
+                    if(holder.titleBean!=null){
+                        holder.titleBean.setFavorite(!holder.titleBean.isFavorite());
+                        notifyDataSetChanged();
+                    }
                 }
             });
             view.setTag(holder);
@@ -87,5 +90,6 @@ public class MainAdapter extends BaseAdapter{
         TextView titleTv;
         TextView timeTv;
         ImageView favorite;
+        TitleBean titleBean;
     }
 }
